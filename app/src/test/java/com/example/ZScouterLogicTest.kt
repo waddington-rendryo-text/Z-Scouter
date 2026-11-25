@@ -1,49 +1,68 @@
 package com.example
 
+import com.example.data.model.CharacterDto
+import com.example.domain.usecase.CalculateSaiyanRankUseCase
+import com.example.domain.usecase.FilterCharactersUseCase
+import com.example.domain.usecase.SimulateBattleUseCase
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ZScouterLogicTest {
 
+    private val rankUseCase = CalculateSaiyanRankUseCase()
+    private val filterUseCase = FilterCharactersUseCase()
+    private val battleUseCase = SimulateBattleUseCase()
+
     @Test
     fun testBaseKi_startsOver8000() {
-        val baseKi = 9001L
-        assertTrue("Base Ki should be over 8000 for Luke!", baseKi > 8000)
+        val totalKi = rankUseCase.calculateTotalKi(0L)
+        assertEquals(9001L, totalKi)
+        assertTrue("Base Ki should be over 8000 for Luke!", totalKi > 8000)
     }
 
     @Test
     fun testSaiyanRankProgression() {
-        fun getRank(ki: Long): String {
-            return when {
-                ki < 15000 -> "Novato"
-                ki < 35000 -> "Elite"
-                ki < 75000 -> "Oozaru"
-                ki < 150000 -> "Super Sayajin"
-                ki < 300000 -> "Super Sayajin 2"
-                ki < 600000 -> "Super Sayajin 3"
-                ki < 1200000 -> "Super Sayajin Deus"
-                ki < 2500000 -> "Super Sayajin Blue"
-                else -> "Instinto / Ego Superior"
-            }
-        }
-
-        assertEquals("Novato", getRank(10000))
-        assertEquals("Super Sayajin", getRank(100000))
-        assertEquals("Super Sayajin Blue", getRank(2000000))
-        assertEquals("Instinto / Ego Superior", getRank(5000000))
+        assertEquals("Guerreiro Sayajin Novato (Scouter Verde)", rankUseCase.getSaiyanRankTitle(10_000))
+        assertEquals("Super Sayajin (Aura Dourada)", rankUseCase.getSaiyanRankTitle(100_000))
+        assertEquals("Super Sayajin Blue (Controle Perfeito)", rankUseCase.getSaiyanRankTitle(2_000_000))
+        assertEquals("Instinto / Ego Superior (Lenda do Universo 7)", rankUseCase.getSaiyanRankTitle(5_000_000))
     }
 
     @Test
     fun testWorkoutKiCalculation() {
-        val sets = 4
-        val reps = 10
-        val weightKg = 80.0
-        val baseKi = (sets * reps * weightKg * 12.0).toLong()
-        val bonus = 2500L
-        val total = baseKi + bonus
+        val total = rankUseCase.calculateWorkoutKi(
+            exerciseName = "Supino na Câmara de Gravidade 100x",
+            sets = 4,
+            reps = 10,
+            weightKg = 80.0
+        )
+        assertEquals(40_900L, total)
+    }
 
-        assertEquals(40900L, total)
-        assertTrue(total > 0)
+    @Test
+    fun testFilterCharactersByRaceAndQuery() {
+        val sample = listOf(
+            CharacterDto(id = 1, name = "Goku", race = "Saiyan", affiliation = "Z Fighter"),
+            CharacterDto(id = 2, name = "Vegeta", race = "Saiyan", affiliation = "Z Fighter"),
+            CharacterDto(id = 3, name = "Piccolo", race = "Namekian", affiliation = "Z Fighter")
+        )
+
+        val saiyans = filterUseCase(sample, query = "", raceFilter = "Saiyajin", affiliationFilter = "Todos")
+        assertEquals(2, saiyans.size)
+
+        val vegeta = filterUseCase(sample, query = "veg", raceFilter = "Saiyajin", affiliationFilter = "Z Fighter")
+        assertEquals(1, vegeta.size)
+        assertEquals("Vegeta", vegeta.first().name)
+    }
+
+    @Test
+    fun testSimulateBattleBetweenSaiyans() {
+        val vegeta = CharacterDto(id = 2, name = "Vegeta", ki = "54.000.000", maxKi = "19.84 Septillion", race = "Saiyan")
+        val krillin = CharacterDto(id = 10, name = "Krillin", ki = "1.000.000", maxKi = "2.000.000", race = "Human")
+
+        val result = battleUseCase(vegeta, krillin)
+        assertEquals("Vegeta", result.winner.name)
+        assertTrue(result.differencePct in 2..98)
     }
 }

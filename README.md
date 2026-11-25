@@ -37,6 +37,7 @@ Desenvolvido com foco no perfil de **Lucas "Luke" Silva** (28 anos, Designer Gr�
 - **Linguagem:** Kotlin
 - **UI:** Jetpack Compose + Material Design 3 + Edge-to-Edge (`WindowInsets`)
 - **Tipografia & Visual:** Fonte local `Orbitron`, paleta inspirada em *Capsule Corp.* e *Super Saiyajin*, ícone adaptativo personalizado
+- **Arquitetura & DI:** Clean Architecture (`data`, `domain`, `ui`, `di`) + MVVM com **Koin** (`koin-android`, `koin-androidx-compose`)
 - **Rede & Serialização:** Retrofit 2 + OkHttp + Moshi (`KotlinJsonAdapterFactory` / KSP)
 - **Persistência Local:** Room Database (`FigureEntity`, `WorkoutLogEntity`) com Kotlin Coroutines & `Flow`
 - **Imagens:** Coil Compose (`SubcomposeAsyncImage`)

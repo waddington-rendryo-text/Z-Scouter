@@ -23,7 +23,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ui.components.CharacterDetailDialog
 import com.example.ui.components.ZBottomNavigation
 import com.example.ui.screens.FiguresShelfScreen
@@ -34,6 +33,7 @@ import com.example.ui.theme.DarkSpaceBg
 import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.theme.SaiyanGold
 import com.example.ui.viewmodel.ZScouterViewModel
+import org.koin.androidx.compose.koinViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,7 +49,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun ZScouterApp(
-    viewModel: ZScouterViewModel = viewModel()
+    viewModel: ZScouterViewModel = koinViewModel()
 ) {
     var currentTab by rememberSaveable { mutableIntStateOf(0) }
 
