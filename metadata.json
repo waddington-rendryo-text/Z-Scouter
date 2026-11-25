@@ -1,0 +1,6 @@
+{
+  "name": "Z-Scouter",
+  "description": "Central Dragon Ball Z & Super para guerreiros Saiyajin: radar de lutadores, medidor de Ki para treino, simulador de batalhas Sparking e prateleira de colecionáveis.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
