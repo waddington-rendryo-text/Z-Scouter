@@ -49,6 +49,18 @@ O app consome a **Dragon Ball API** pública e aberta (sem necessidade de chave 
 
 ---
 
+## 📸 Telas do Aplicativo
+
+| Radar Z (Modo Offline • Cache Local) | Ficha Scouter Detalhada | Modo Saiyajin (Treino & Ki) |
+| :---: | :---: | :---: |
+| ![Radar Z em Modo Offline](docs/images/01-radar-z-offline.jpeg) | ![Ficha Scouter Detalhada](docs/images/02-ficha-scouter-detalhes.jpeg) | ![Modo Saiyajin HUD e Treinos](docs/images/03-modo-saiyajin.jpeg) |
+
+| Simulador Sparking (Seleção VS) | Simulador Sparking (Veredito) | Prateleira de Action Figures |
+| :---: | :---: | :---: |
+| ![Simulador Sparking Seleção](docs/images/04-simulador-sparking-vs.jpeg) | ![Simulador Sparking Veredito](docs/images/05-simulador-sparking-veredito.jpeg) | ![Prateleira de Action Figures](docs/images/06-prateleira-figures.jpeg) |
+
+---
+
 ## 🏗️ Arquitetura e Estrutura do Projeto
 
 O projeto adota **Clean Architecture** + **MVVM** com **Unidirectional Data Flow (UDF)**, isolando regras de negócio puras na camada `domain/`:
