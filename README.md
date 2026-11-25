@@ -3,6 +3,8 @@
 Aplicativo Android nativo desenvolvido em **Kotlin + Jetpack Compose** seguindo **Clean Architecture**, **MVVM (UDF)** e estratégia **Offline-First**, que transforma o universo de **Dragon Ball** em uma central interativa para fãs da franquia: enciclopédia de guerreiros e planetas via API REST, rastreador de treinos na academia com progressão de Ki (*Modo Saiyajin*), simulador de batalhas estilo *Sparking! ZERO* e estante pessoal de colecionáveis (*S.H. Figuarts*).
 
 ---
+# APK DISPONÍVEL NAS ABA VERSÕES
+---
 
 ## 🎯 Persona Alvo
 
