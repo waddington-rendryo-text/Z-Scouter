@@ -84,27 +84,30 @@
 
 ---
 
-## Etapa 6: Testes, Build e Validação
+## Etapa 6: Qualidade, Testes e Documentação Final
 
-- [x] **T6.1 — Testes Unitários e Robolectric**
-  - Criar `ZScouterLogicTest.kt` validando Ki base (`> 8000`), faixas de patente Saiyajin e cálculo de Ki por treino.
-  - Atualizar `ExampleRobolectricTest.kt` validando recurso `R.string.app_name` (`"Z-Scouter"`).
-- [x] **T6.2 — Verificação de Compilação e Testes**
-  - Executar `compile_applet` e `gradle :app:testDebugUnitTest` garantindo build verde sem regressões.
+- [x] **T6.1 — Testes Unitários de Casos de Uso, ViewModel e Domínio**
+  - `ZScouterLogicTest.kt`: Validação de Ki base (`> 8000`), patentes Saiyajin, cálculo por treino, filtros e simulador.
+  - `UseCasesUnitTest.kt`: Cobertura completa dos 8 casos de uso (`GetCharacters`, `GetCharacterDetail`, `GetPlanets`, `FilterCharacters`, `CalculateSaiyanRank`, `ManageFigures`, `ManageWorkouts`, `SimulateBattle`) com `FakeDragonBallRepository`.
+  - `ZScouterViewModelTest.kt`: Validação de `StateFlow`, estados `Loading/Success/Error`, fallback de detalhes e simulação de batalha.
+- [x] **T6.2 — Testes de Repositório Offline-First & Robolectric**
+  - `OfflineFirstRepositoryTest.kt`: Sincronização API -> Room, fallback offline em memória, tratamento de erro com cache vazio e CRUD local reativo (`ActionFigure` e `WorkoutLog`).
+  - `ExampleRobolectricTest.kt`: Validação de recursos (`R.string.app_name` = `"Z-Scouter"`) e resolução completa do grafo Koin.
+- [x] **T6.3 — Documentação Final e Relatório de Testes**
+  - `README.md` completo com persona, API REST, arquitetura, stack e instruções de execução.
+  - `TEST_RESULTS.md` com o relatório consolidado da execução dos testes (`gradle :app:testDebugUnitTest`).
 
 ---
 
-## 📌 Referência de Commits Sugeridos (Conventional Commits)
-
-Caso queira versionar a documentação da Fase 1 em commits separados no GitHub:
+## 📌 Referência de Commits (Conventional Commits)
 
 ```bash
-git add docs/01-ESPECIFICACAO.md
+# Fase 1: Documentação e Planejamento (SDD)
 git commit -m "docs: adiciona especificação inicial do projeto"
-
-git add docs/02-ARQUITETURA.md
 git commit -m "docs: documenta arquitetura e planejamento"
-
-git add docs/03-DECOMPOSICAO-TAREFAS.md README.md
 git commit -m "docs: adiciona decomposição de tarefas"
+
+# Fase 6: Qualidade, Testes e Documentação Final
+git commit -m "test: adiciona testes unitários dos casos de uso"
+git commit -m "docs: atualiza README.md e adiciona relatório de testes"
 ```

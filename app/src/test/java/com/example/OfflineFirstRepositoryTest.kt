@@ -14,8 +14,12 @@ import com.example.data.model.PlanetDto
 import com.example.data.model.PlanetsResponse
 import com.example.data.model.TransformationDto
 import com.example.data.repository.ZScouterRepository
+import com.example.domain.model.ActionFigure
+import com.example.domain.model.FigureStatus
+import com.example.domain.model.WorkoutLog
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -123,4 +127,59 @@ class OfflineFirstRepositoryTest {
         assertEquals("Vegeta", offlinePlanets.getOrNull()?.first()?.name)
         assertTrue(repository.isOfflineMode.value)
     }
+
+    @Test
+    fun `offline request with empty cache returns failure without offline cache flag`() = runTest {
+        shouldFailNetwork = true
+
+        val charsResult = repository.getCharacters()
+        val detailResult = repository.getCharacterDetail(99)
+        val planetsResult = repository.getPlanets()
+
+        assertTrue(charsResult.isFailure)
+        assertTrue(detailResult.isFailure)
+        assertTrue(planetsResult.isFailure)
+        assertFalse(repository.isOfflineMode.value)
+    }
+
+    @Test
+    fun `local figures and workouts crud update reactive flows in room`() = runTest {
+        val figure = ActionFigure(
+            characterId = 2,
+            name = "Vegeta",
+            race = "Saiyan",
+            image = "vegeta.webp",
+            status = FigureStatus.EXPOSED,
+            rating = 5,
+            customNote = "SH Figuarts"
+        )
+        repository.addFigure(figure)
+        assertTrue(repository.isFigureInCollection(2))
+        val storedFigures = repository.figuresFlow.first()
+        assertEquals(1, storedFigures.size)
+        assertEquals("Vegeta", storedFigures.first().name)
+
+        repository.removeFigureByCharacterId(2)
+        assertFalse(repository.isFigureInCollection(2))
+        assertTrue(repository.figuresFlow.first().isEmpty())
+
+        val workout = WorkoutLog(
+            exerciseName = "Agachamento Sayajin",
+            sets = 4,
+            reps = 10,
+            weightKg = 100.0,
+            kiGained = 50_500L,
+            notes = "Série pesada"
+        )
+        repository.logWorkout(workout)
+
+        val storedWorkouts = repository.workoutsFlow.first()
+        assertEquals(1, storedWorkouts.size)
+        assertEquals("Agachamento Sayajin", storedWorkouts.first().exerciseName)
+        assertEquals(50_500L, repository.totalKiGainedFlow.first())
+
+        repository.deleteWorkout(storedWorkouts.first())
+        assertTrue(repository.workoutsFlow.first().isEmpty())
+    }
 }
+
