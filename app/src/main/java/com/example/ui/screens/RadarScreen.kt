@@ -73,6 +73,7 @@ fun RadarScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedRace by viewModel.selectedRaceFilter.collectAsState()
     val figures by viewModel.figures.collectAsState()
+    val isOfflineMode by viewModel.isOfflineMode.collectAsState()
 
     val savedCharacterIds = figures.map { it.characterId }.toSet()
 
@@ -229,9 +230,9 @@ fun RadarScreen(
                     )
 
                     Text(
-                        text = "API DRAGON BALL ONLINE",
+                        text = if (isOfflineMode) "MODO OFFLINE • CACHE LOCAL" else "API DRAGON BALL ONLINE",
                         style = MaterialTheme.typography.labelMedium,
-                        color = TextSecondary,
+                        color = if (isOfflineMode) KiFlameOrange else TextSecondary,
                         fontSize = 9.sp
                     )
                 }

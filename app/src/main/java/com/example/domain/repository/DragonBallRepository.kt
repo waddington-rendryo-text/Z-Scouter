@@ -6,11 +6,15 @@ import com.example.data.model.CharacterDetailDto
 import com.example.data.model.CharacterDto
 import com.example.data.model.PlanetDto
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 
 interface DragonBallRepository {
+    val charactersFlow: Flow<List<CharacterDto>>
+    val planetsFlow: Flow<List<PlanetDto>>
     val figuresFlow: Flow<List<FigureEntity>>
     val workoutsFlow: Flow<List<WorkoutLogEntity>>
     val totalKiGainedFlow: Flow<Long?>
+    val isOfflineMode: StateFlow<Boolean>
 
     suspend fun getCharacters(): Result<List<CharacterDto>>
     suspend fun getCharacterDetail(id: Int): Result<CharacterDetailDto>

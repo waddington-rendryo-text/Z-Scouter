@@ -71,6 +71,9 @@ class ZScouterViewModel(
     private val _planetsState = MutableStateFlow<UiState<List<PlanetDto>>>(UiState.Loading)
     val planetsState: StateFlow<UiState<List<PlanetDto>>> = _planetsState.asStateFlow()
 
+    // Offline-First status
+    val isOfflineMode: StateFlow<Boolean> = repository.isOfflineMode
+
     // Figures Collection from Room
     val figures: StateFlow<List<FigureEntity>> = repository.figuresFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -103,14 +106,41 @@ class ZScouterViewModel(
     val battleResult = MutableStateFlow<BattleResult?>(null)
 
     init {
+        observeCachedData()
         loadCharacters()
         loadPlanets()
         seedInitialFiguresIfEmpty()
     }
 
+    private fun observeCachedData() {
+        viewModelScope.launch {
+            repository.charactersFlow.collect { cached ->
+                if (cached.isNotEmpty()) {
+                    _allCharacters.value = cached
+                    _charactersState.value = UiState.Success(cached)
+                    if (battleFighter1.value == null) {
+                        battleFighter1.value = cached.firstOrNull { it.name.contains("Vegeta", ignoreCase = true) } ?: cached.first()
+                    }
+                    if (battleFighter2.value == null && cached.size > 1) {
+                        battleFighter2.value = cached.firstOrNull { it.name.contains("Goku", ignoreCase = true) } ?: cached[1]
+                    }
+                }
+            }
+        }
+        viewModelScope.launch {
+            repository.planetsFlow.collect { cachedPlanets ->
+                if (cachedPlanets.isNotEmpty()) {
+                    _planetsState.value = UiState.Success(cachedPlanets)
+                }
+            }
+        }
+    }
+
     fun loadCharacters() {
         viewModelScope.launch {
-            _charactersState.value = UiState.Loading
+            if (_allCharacters.value.isEmpty()) {
+                _charactersState.value = UiState.Loading
+            }
             repository.getCharacters()
                 .onSuccess { list ->
                     _allCharacters.value = list
@@ -123,20 +153,26 @@ class ZScouterViewModel(
                     }
                 }
                 .onFailure { error ->
-                    _charactersState.value = UiState.Error(error.localizedMessage ?: "Erro ao carregar guerreiros da API")
+                    if (_allCharacters.value.isEmpty()) {
+                        _charactersState.value = UiState.Error(error.localizedMessage ?: "Erro ao carregar guerreiros da API")
+                    }
                 }
         }
     }
 
     fun loadPlanets() {
         viewModelScope.launch {
-            _planetsState.value = UiState.Loading
+            if (_planetsState.value !is UiState.Success) {
+                _planetsState.value = UiState.Loading
+            }
             repository.getPlanets()
                 .onSuccess { list ->
                     _planetsState.value = UiState.Success(list)
                 }
                 .onFailure { error ->
-                    _planetsState.value = UiState.Error(error.localizedMessage ?: "Erro ao carregar planetas")
+                    if (_planetsState.value !is UiState.Success) {
+                        _planetsState.value = UiState.Error(error.localizedMessage ?: "Erro ao carregar planetas")
+                    }
                 }
         }
     }

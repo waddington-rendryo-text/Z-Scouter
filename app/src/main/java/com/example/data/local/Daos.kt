@@ -9,6 +9,42 @@ import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
 @Dao
+interface CharacterDao {
+    @Query("SELECT * FROM characters ORDER BY id ASC")
+    fun getAllCharacters(): Flow<List<CharacterEntity>>
+
+    @Query("SELECT * FROM characters ORDER BY id ASC")
+    suspend fun getAllCharactersOnce(): List<CharacterEntity>
+
+    @Query("SELECT * FROM characters WHERE id = :id LIMIT 1")
+    suspend fun getCharacterById(id: Int): CharacterEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCharacters(characters: List<CharacterEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCharacter(character: CharacterEntity)
+
+    @Query("DELETE FROM characters")
+    suspend fun clearCharacters()
+}
+
+@Dao
+interface PlanetDao {
+    @Query("SELECT * FROM planets ORDER BY id ASC")
+    fun getAllPlanets(): Flow<List<PlanetEntity>>
+
+    @Query("SELECT * FROM planets ORDER BY id ASC")
+    suspend fun getAllPlanetsOnce(): List<PlanetEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPlanets(planets: List<PlanetEntity>)
+
+    @Query("DELETE FROM planets")
+    suspend fun clearPlanets()
+}
+
+@Dao
 interface FigureDao {
     @Query("SELECT * FROM figures ORDER BY addedDate DESC")
     fun getAllFigures(): Flow<List<FigureEntity>>

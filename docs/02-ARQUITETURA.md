@@ -67,23 +67,25 @@ Concentra os modelos de domínio, contratos de repositório e casos de uso puros
   - `CalculateSaiyanRankUseCase.kt`: Cálculo de Ki ganho por treino (`calculateWorkoutKi`), Ki total (`calculateTotalKi`) e patente Saiyajin (`getSaiyanRankTitle`).
   - `SimulateBattleUseCase.kt`: Heurística de poder (`estimateKiScore`) e veredito do duelo estilo *Sparking! ZERO*.
 
-### 2.3. Camada de Dados (`Data`)
-Responsável pela comunicação externa, serialização JSON e persistência local:
+### 2.3. Camada de Dados (`Data`) — Estratégia Offline-First
+Responsável pela comunicação externa, conversão DTO/Entity e persistência local:
 - **Remoto (`data/api/` e `data/model/`):**
   - `DragonBallApiService.kt`: Interface Retrofit para os endpoints da Dragon Ball API.
   - `DragonBallModels.kt`: DTOs anotados com `@JsonClass(generateAdapter = true)` para geração em tempo de compilação via KSP.
+- **Mappers (`data/mapper/`):**
+  - `DragonBallMapper.kt`: Converte DTOs da API em entidades do Room (`CharacterEntity`, `PlanetEntity`) e reconstrói detalhes completos (`originPlanet`, `transformations`) a partir do cache JSON local.
 - **Local (`data/local/`):**
-  - `Entities.kt`: Tabelas `figures` (`FigureEntity`) e `workout_logs` (`WorkoutLogEntity`).
-  - `Daos.kt`: `FigureDao` e `WorkoutDao` retornando `Flow<List<...>>` e `Flow<Long?>` para atualização automática da UI.
-  - `AppDatabase.kt`: Instância singleton do Room (`z_scouter_database`).
+  - `Entities.kt`: Tabelas `characters` (`CharacterEntity`), `planets` (`PlanetEntity`), `figures` (`FigureEntity`) e `workout_logs` (`WorkoutLogEntity`).
+  - `Daos.kt`: `CharacterDao`, `PlanetDao`, `FigureDao` e `WorkoutDao` retornando `Flow<List<...>>` e consultas pontuais para fallback offline.
+  - `AppDatabase.kt`: Instância singleton do Room (`z_scouter_database`, versão 2).
 - **Repositório (`data/repository/ZScouterRepository.kt`):**
-  - Implementa `DragonBallRepository`, abstraindo chamadas de rede e operações no Room com `withContext(Dispatchers.IO)` e encapsulamento seguro com `Result<T>`.
+  - Implementa `DragonBallRepository` com estratégia **Offline-First**: sincroniza respostas da API para o Room, expõe `Flow`s locais como fonte reativa de dados e realiza fallback automático para o cache local em falhas de rede (`isOfflineMode`).
 
 ### 2.4. Injeção de Dependências (`DI` com Koin)
 Módulos globais configurados em `di/` e inicializados em `ZScouterApplication`:
 - `NetworkModule.kt`: Provê `Moshi`, `HttpLoggingInterceptor`, `OkHttpClient`, `Retrofit` e `DragonBallApiService`.
-- `DatabaseModule.kt`: Provê `AppDatabase`, `FigureDao` e `WorkoutDao`.
-- `RepositoryModule.kt`: Vincula `DragonBallRepository` à implementação `ZScouterRepository`.
+- `DatabaseModule.kt`: Provê `AppDatabase`, `CharacterDao`, `PlanetDao`, `FigureDao` e `WorkoutDao`.
+- `RepositoryModule.kt`: Provê `DragonBallMapper` e vincula `DragonBallRepository` à implementação `ZScouterRepository`.
 - `DomainModule.kt`: Provê os UseCases (`FilterCharactersUseCase`, `CalculateSaiyanRankUseCase`, `SimulateBattleUseCase`).
 - `ViewModelModule.kt`: Provê `ZScouterViewModel` e consolida `appModules`.
 
@@ -127,13 +129,15 @@ app/src/main/
 │   │   ├── api/
 │   │   │   └── DragonBallApiService.kt   # Interface Retrofit
 │   │   ├── local/
-│   │   │   ├── AppDatabase.kt            # Configuração RoomDatabase
-│   │   │   ├── Daos.kt                   # Consultas reativas (FigureDao, WorkoutDao)
-│   │   │   └── Entities.kt               # Modelos relacionais (FigureEntity, WorkoutLogEntity)
+│   │   │   ├── AppDatabase.kt            # Configuração RoomDatabase (v2)
+│   │   │   ├── Daos.kt                   # CharacterDao, PlanetDao, FigureDao, WorkoutDao
+│   │   │   └── Entities.kt               # CharacterEntity, PlanetEntity, FigureEntity, WorkoutLogEntity
+│   │   ├── mapper/
+│   │   │   └── DragonBallMapper.kt       # Conversores DTO <-> Entity
 │   │   ├── model/
 │   │   │   └── DragonBallModels.kt       # DTOs da API (Characters, Transformations, Planets)
 │   │   └── repository/
-│   │       └── ZScouterRepository.kt     # Implementação de DragonBallRepository
+│   │       └── ZScouterRepository.kt     # Repositório Offline-First (Room + Retrofit)
 │   └── ui/
 │       ├── components/                   # Componentes visuais reutilizáveis e desacoplados
 │       │   ├── CharacterCard.kt

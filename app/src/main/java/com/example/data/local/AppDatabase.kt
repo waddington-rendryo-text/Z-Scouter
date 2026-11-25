@@ -6,11 +6,18 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [FigureEntity::class, WorkoutLogEntity::class],
-    version = 1,
+    entities = [
+        FigureEntity::class,
+        WorkoutLogEntity::class,
+        CharacterEntity::class,
+        PlanetEntity::class
+    ],
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
+    abstract fun characterDao(): CharacterDao
+    abstract fun planetDao(): PlanetDao
     abstract fun figureDao(): FigureDao
     abstract fun workoutDao(): WorkoutDao
 
@@ -24,7 +31,7 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "z_scouter_database"
-                ).fallbackToDestructiveMigration().build()
+                ).fallbackToDestructiveMigration(dropAllTables = true).build()
                 INSTANCE = instance
                 instance
             }
