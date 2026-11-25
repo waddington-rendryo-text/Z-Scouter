@@ -2,15 +2,20 @@ package com.example.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.data.local.FigureEntity
-import com.example.data.local.WorkoutLogEntity
-import com.example.data.model.CharacterDetailDto
-import com.example.data.model.CharacterDto
-import com.example.data.model.PlanetDto
+import com.example.domain.model.ActionFigure
 import com.example.domain.model.BattleResult
-import com.example.domain.repository.DragonBallRepository
+import com.example.domain.model.Character
+import com.example.domain.model.CharacterDetail
+import com.example.domain.model.FigureStatus
+import com.example.domain.model.Planet
+import com.example.domain.model.WorkoutLog
 import com.example.domain.usecase.CalculateSaiyanRankUseCase
 import com.example.domain.usecase.FilterCharactersUseCase
+import com.example.domain.usecase.GetCharacterDetailUseCase
+import com.example.domain.usecase.GetCharactersUseCase
+import com.example.domain.usecase.GetPlanetsUseCase
+import com.example.domain.usecase.ManageFiguresUseCase
+import com.example.domain.usecase.ManageWorkoutsUseCase
 import com.example.domain.usecase.SimulateBattleUseCase
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +23,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -29,24 +33,27 @@ sealed interface UiState<out T> {
 }
 
 class ZScouterViewModel(
-    private val repository: DragonBallRepository,
+    private val getCharactersUseCase: GetCharactersUseCase,
+    private val getCharacterDetailUseCase: GetCharacterDetailUseCase,
+    private val getPlanetsUseCase: GetPlanetsUseCase,
     private val filterCharactersUseCase: FilterCharactersUseCase,
     private val calculateSaiyanRankUseCase: CalculateSaiyanRankUseCase,
-    private val simulateBattleUseCase: SimulateBattleUseCase
+    private val manageFiguresUseCase: ManageFiguresUseCase,
+    private val manageWorkoutsUseCase: ManageWorkoutsUseCase,
+    private val simulateBattleUseCase: SimulateBattleUseCase,
+    isOfflineModeFlow: StateFlow<Boolean>
 ) : ViewModel() {
 
-    // Characters state
-    private val _charactersState = MutableStateFlow<UiState<List<CharacterDto>>>(UiState.Loading)
-    val charactersState: StateFlow<UiState<List<CharacterDto>>> = _charactersState.asStateFlow()
+    private val _charactersState = MutableStateFlow<UiState<List<Character>>>(UiState.Loading)
+    val charactersState: StateFlow<UiState<List<Character>>> = _charactersState.asStateFlow()
 
-    private val _allCharacters = MutableStateFlow<List<CharacterDto>>(emptyList())
+    private val _allCharacters = MutableStateFlow<List<Character>>(emptyList())
 
     val searchQuery = MutableStateFlow("")
     val selectedRaceFilter = MutableStateFlow("Todos")
     val selectedAffiliationFilter = MutableStateFlow("Todos")
 
-    // Filtered characters via Domain UseCase
-    val filteredCharacters: StateFlow<List<CharacterDto>> = combine(
+    val filteredCharacters: StateFlow<List<Character>> = combine(
         _allCharacters,
         searchQuery,
         selectedRaceFilter,
@@ -60,32 +67,26 @@ class ZScouterViewModel(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Character Detail
-    private val _selectedCharacterDetail = MutableStateFlow<CharacterDetailDto?>(null)
-    val selectedCharacterDetail: StateFlow<CharacterDetailDto?> = _selectedCharacterDetail.asStateFlow()
+    private val _selectedCharacterDetail = MutableStateFlow<CharacterDetail?>(null)
+    val selectedCharacterDetail: StateFlow<CharacterDetail?> = _selectedCharacterDetail.asStateFlow()
 
     private val _isLoadingDetail = MutableStateFlow(false)
     val isLoadingDetail: StateFlow<Boolean> = _isLoadingDetail.asStateFlow()
 
-    // Planets
-    private val _planetsState = MutableStateFlow<UiState<List<PlanetDto>>>(UiState.Loading)
-    val planetsState: StateFlow<UiState<List<PlanetDto>>> = _planetsState.asStateFlow()
+    private val _planetsState = MutableStateFlow<UiState<List<Planet>>>(UiState.Loading)
+    val planetsState: StateFlow<UiState<List<Planet>>> = _planetsState.asStateFlow()
 
-    // Offline-First status
-    val isOfflineMode: StateFlow<Boolean> = repository.isOfflineMode
+    val isOfflineMode: StateFlow<Boolean> = isOfflineModeFlow
 
-    // Figures Collection from Room
-    val figures: StateFlow<List<FigureEntity>> = repository.figuresFlow
+    val figures: StateFlow<List<ActionFigure>> = manageFiguresUseCase.observeFigures()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Workout logs from Room
-    val workouts: StateFlow<List<WorkoutLogEntity>> = repository.workoutsFlow
+    val workouts: StateFlow<List<WorkoutLog>> = manageWorkoutsUseCase.observeWorkouts()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val totalKiGained: StateFlow<Long?> = repository.totalKiGainedFlow
+    val totalKiGained: StateFlow<Long?> = manageWorkoutsUseCase.observeTotalKiGained()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0L)
 
-    // Motivational Quote
     val quotes = listOf(
         "O miserável é um gênio! Não posso ficar para trás nesse treino!",
         "Eu sou o Príncipe dos Saiyajins! Nenhum limite humano pode me deter!",
@@ -99,9 +100,8 @@ class ZScouterViewModel(
     private val _currentQuote = MutableStateFlow(quotes[0])
     val currentQuote: StateFlow<String> = _currentQuote.asStateFlow()
 
-    // Battle Simulator State
-    val battleFighter1 = MutableStateFlow<CharacterDto?>(null)
-    val battleFighter2 = MutableStateFlow<CharacterDto?>(null)
+    val battleFighter1 = MutableStateFlow<Character?>(null)
+    val battleFighter2 = MutableStateFlow<Character?>(null)
     val isSimulatingBattle = MutableStateFlow(false)
     val battleResult = MutableStateFlow<BattleResult?>(null)
 
@@ -109,30 +109,36 @@ class ZScouterViewModel(
         observeCachedData()
         loadCharacters()
         loadPlanets()
-        seedInitialFiguresIfEmpty()
+        viewModelScope.launch {
+            manageFiguresUseCase.seedInitialCollectionIfEmpty()
+        }
     }
 
     private fun observeCachedData() {
         viewModelScope.launch {
-            repository.charactersFlow.collect { cached ->
+            getCharactersUseCase.observe().collect { cached ->
                 if (cached.isNotEmpty()) {
                     _allCharacters.value = cached
                     _charactersState.value = UiState.Success(cached)
-                    if (battleFighter1.value == null) {
-                        battleFighter1.value = cached.firstOrNull { it.name.contains("Vegeta", ignoreCase = true) } ?: cached.first()
-                    }
-                    if (battleFighter2.value == null && cached.size > 1) {
-                        battleFighter2.value = cached.firstOrNull { it.name.contains("Goku", ignoreCase = true) } ?: cached[1]
-                    }
+                    assignDefaultBattleFighters(cached)
                 }
             }
         }
         viewModelScope.launch {
-            repository.planetsFlow.collect { cachedPlanets ->
+            getPlanetsUseCase.observe().collect { cachedPlanets ->
                 if (cachedPlanets.isNotEmpty()) {
                     _planetsState.value = UiState.Success(cachedPlanets)
                 }
             }
+        }
+    }
+
+    private fun assignDefaultBattleFighters(list: List<Character>) {
+        if (battleFighter1.value == null && list.isNotEmpty()) {
+            battleFighter1.value = list.firstOrNull { it.isPrinceVegeta } ?: list.first()
+        }
+        if (battleFighter2.value == null && list.size > 1) {
+            battleFighter2.value = list.firstOrNull { it.name.contains("Goku", ignoreCase = true) } ?: list[1]
         }
     }
 
@@ -141,16 +147,11 @@ class ZScouterViewModel(
             if (_allCharacters.value.isEmpty()) {
                 _charactersState.value = UiState.Loading
             }
-            repository.getCharacters()
+            getCharactersUseCase()
                 .onSuccess { list ->
                     _allCharacters.value = list
                     _charactersState.value = UiState.Success(list)
-                    if (battleFighter1.value == null && list.isNotEmpty()) {
-                        battleFighter1.value = list.firstOrNull { it.name.contains("Vegeta", ignoreCase = true) } ?: list.first()
-                    }
-                    if (battleFighter2.value == null && list.size > 1) {
-                        battleFighter2.value = list.firstOrNull { it.name.contains("Goku", ignoreCase = true) } ?: list[1]
-                    }
+                    assignDefaultBattleFighters(list)
                 }
                 .onFailure { error ->
                     if (_allCharacters.value.isEmpty()) {
@@ -165,7 +166,7 @@ class ZScouterViewModel(
             if (_planetsState.value !is UiState.Success) {
                 _planetsState.value = UiState.Loading
             }
-            repository.getPlanets()
+            getPlanetsUseCase()
                 .onSuccess { list ->
                     _planetsState.value = UiState.Success(list)
                 }
@@ -177,17 +178,17 @@ class ZScouterViewModel(
         }
     }
 
-    fun selectCharacterForDetail(character: CharacterDto) {
+    fun selectCharacterForDetail(character: Character) {
         viewModelScope.launch {
             _isLoadingDetail.value = true
             _selectedCharacterDetail.value = null
-            repository.getCharacterDetail(character.id)
+            getCharacterDetailUseCase(character.id)
                 .onSuccess { detail ->
                     _selectedCharacterDetail.value = detail
                     _isLoadingDetail.value = false
                 }
                 .onFailure {
-                    _selectedCharacterDetail.value = CharacterDetailDto(
+                    _selectedCharacterDetail.value = CharacterDetail(
                         id = character.id,
                         name = character.name,
                         ki = character.ki,
@@ -207,36 +208,21 @@ class ZScouterViewModel(
         _selectedCharacterDetail.value = null
     }
 
-    fun toggleFigureCollection(character: CharacterDto, defaultStatus: String = "Exposto no Estúdio") {
+    fun toggleFigureCollection(character: Character, defaultStatus: FigureStatus = FigureStatus.EXPOSED) {
         viewModelScope.launch {
-            val existing = figures.value.firstOrNull { it.characterId == character.id }
-            if (existing != null) {
-                repository.removeFigure(existing)
-            } else {
-                repository.addFigure(
-                    FigureEntity(
-                        characterId = character.id,
-                        name = character.name,
-                        race = character.race ?: "Desconhecida",
-                        image = character.image ?: "",
-                        status = defaultStatus,
-                        rating = if (character.name.contains("Vegeta", ignoreCase = true)) 5 else 4,
-                        customNote = "Miniatura colecionável SH Figuarts do Luke"
-                    )
-                )
-            }
+            manageFiguresUseCase.toggleFigure(character, figures.value, defaultStatus)
         }
     }
 
-    fun updateFigureStatus(figure: FigureEntity, newStatus: String, newNote: String) {
+    fun updateFigureStatus(figure: ActionFigure, newStatus: FigureStatus, newNote: String) {
         viewModelScope.launch {
-            repository.addFigure(figure.copy(status = newStatus, customNote = newNote))
+            manageFiguresUseCase.updateFigure(figure, newStatus, newNote)
         }
     }
 
-    fun deleteFigure(figure: FigureEntity) {
+    fun deleteFigure(figure: ActionFigure) {
         viewModelScope.launch {
-            repository.removeFigure(figure)
+            manageFiguresUseCase.deleteFigure(figure)
         }
     }
 
@@ -246,30 +232,14 @@ class ZScouterViewModel(
 
     fun logWorkout(exerciseName: String, sets: Int, reps: Int, weightKg: Double, notes: String) {
         viewModelScope.launch {
-            val totalKiGained = calculateSaiyanRankUseCase.calculateWorkoutKi(
-                exerciseName = exerciseName,
-                sets = sets,
-                reps = reps,
-                weightKg = weightKg
-            )
-
-            repository.logWorkout(
-                WorkoutLogEntity(
-                    exerciseName = exerciseName,
-                    sets = sets,
-                    reps = reps,
-                    weightKg = weightKg,
-                    kiGained = totalKiGained,
-                    notes = notes
-                )
-            )
+            manageWorkoutsUseCase.logWorkout(exerciseName, sets, reps, weightKg, notes)
             randomizeQuote()
         }
     }
 
-    fun deleteWorkout(workout: WorkoutLogEntity) {
+    fun deleteWorkout(workout: WorkoutLog) {
         viewModelScope.launch {
-            repository.deleteWorkout(workout)
+            manageWorkoutsUseCase.deleteWorkout(workout)
         }
     }
 
@@ -292,36 +262,6 @@ class ZScouterViewModel(
             delay(1200)
             battleResult.value = simulateBattleUseCase(f1, f2)
             isSimulatingBattle.value = false
-        }
-    }
-
-    private fun seedInitialFiguresIfEmpty() {
-        viewModelScope.launch {
-            val currentFigures = repository.figuresFlow.first()
-            if (currentFigures.isEmpty()) {
-                repository.addFigure(
-                    FigureEntity(
-                        characterId = 2,
-                        name = "Vegeta",
-                        race = "Saiyan",
-                        image = "https://dragonball-api.com/characters/vegeta_normal.webp",
-                        status = "Exposto no Estúdio",
-                        rating = 5,
-                        customNote = "SH Figuarts Super Saiyan Blue - Destaque principal da estante"
-                    )
-                )
-                repository.addFigure(
-                    FigureEntity(
-                        characterId = 1,
-                        name = "Goku",
-                        race = "Saiyan",
-                        image = "https://dragonball-api.com/characters/goku_normal.webp",
-                        status = "Exposto no Estúdio",
-                        rating = 5,
-                        customNote = "SH Figuarts S.H.F Son Goku - Edição Clássica com Esfera de 4 Estrelas"
-                    )
-                )
-            }
         }
     }
 }

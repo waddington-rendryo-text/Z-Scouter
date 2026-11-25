@@ -7,10 +7,15 @@ import org.koin.dsl.module
 val viewModelModule = module {
     viewModel {
         ZScouterViewModel(
-            repository = get(),
+            getCharactersUseCase = get(),
+            getCharacterDetailUseCase = get(),
+            getPlanetsUseCase = get(),
             filterCharactersUseCase = get(),
             calculateSaiyanRankUseCase = get(),
-            simulateBattleUseCase = get()
+            manageFiguresUseCase = get(),
+            manageWorkoutsUseCase = get(),
+            simulateBattleUseCase = get(),
+            isOfflineModeFlow = get<com.example.domain.repository.DragonBallRepository>().isOfflineMode
         )
     }
 }

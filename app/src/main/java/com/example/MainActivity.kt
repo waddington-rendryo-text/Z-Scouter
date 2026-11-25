@@ -110,18 +110,7 @@ fun ZScouterApp(
                     isInCollection = isInCollection,
                     onDismiss = { viewModel.closeCharacterDetail() },
                     onToggleCollection = {
-                        val basicDto = com.example.data.model.CharacterDto(
-                            id = detail.id,
-                            name = detail.name,
-                            ki = detail.ki,
-                            maxKi = detail.maxKi,
-                            race = detail.race,
-                            gender = detail.gender,
-                            description = detail.description,
-                            image = detail.image,
-                            affiliation = detail.affiliation
-                        )
-                        viewModel.toggleFigureCollection(basicDto)
+                        viewModel.toggleFigureCollection(detail.toBasicCharacter())
                     }
                 )
             }

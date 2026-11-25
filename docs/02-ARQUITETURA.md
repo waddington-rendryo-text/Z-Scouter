@@ -57,14 +57,20 @@ Responsável exclusivamente por renderizar o estado da interface, capturar inter
   - Centraliza paleta (`Color.kt`), tipografia com fonte local `Orbitron` (`Type.kt`) e esquema Material 3 (`Theme.kt`).
 
 ### 2.2. Camada de Domínio (`Domain`)
-Concentra os modelos de domínio, contratos de repositório e casos de uso puros da aplicação, independentes de frameworks de UI ou detalhes de persistência/rede:
+Camada 100% Kotlin puro (sem dependências de Room, Retrofit, Moshi ou Android), concentrando modelos de negócio, contratos de repositório e casos de uso:
 - **Contratos (`domain/repository/`):**
-  - `DragonBallRepository.kt`: Interface que abstrai as operações remotas e locais para o ViewModel.
+  - `DragonBallRepository.kt`: Interface pura que abstrai as operações remotas e locais para os casos de uso.
 - **Modelos de Domínio (`domain/model/`):**
+  - `Character.kt`: `Character`, `CharacterDetail`, `Transformation`, `OriginPlanet` e `Planet`.
+  - `ActionFigure.kt`: `ActionFigure` e enum `FigureStatus` (`EXPOSED`, `BOXED`, `WISHLIST`).
+  - `WorkoutLog.kt`: `WorkoutLog` e `SaiyanRank`.
   - `BattleResult.kt`: Resultado estruturado da simulação de combate no Scouter.
 - **Casos de Uso (`domain/usecase/`):**
+  - `GetCharactersUseCase.kt` / `GetCharacterDetailUseCase.kt` / `GetPlanetsUseCase.kt`: Orquestração reativa e consulta de dados do repositório.
   - `FilterCharactersUseCase.kt`: Mapeamento e filtragem por nome, raça e afiliação.
-  - `CalculateSaiyanRankUseCase.kt`: Cálculo de Ki ganho por treino (`calculateWorkoutKi`), Ki total (`calculateTotalKi`) e patente Saiyajin (`getSaiyanRankTitle`).
+  - `CalculateSaiyanRankUseCase.kt`: Cálculo de Ki ganho por treino (`calculateWorkoutKi`), Ki total (`calculateTotalKi`) e patente Saiyajin (`getSaiyanRank`).
+  - `ManageWorkoutsUseCase.kt`: Validação de séries/reps/carga e registro/exclusão de treinos.
+  - `ManageFiguresUseCase.kt`: Regras de coleção, toggle, edição de status/notas e seed inicial.
   - `SimulateBattleUseCase.kt`: Heurística de poder (`estimateKiScore`) e veredito do duelo estilo *Sparking! ZERO*.
 
 ### 2.3. Camada de Dados (`Data`) — Estratégia Offline-First
@@ -118,12 +124,20 @@ app/src/main/
 │   │   └── ViewModelModule.kt            # Módulo ViewModel + lista appModules
 │   ├── domain/
 │   │   ├── model/
-│   │   │   └── BattleResult.kt           # Modelo de domínio do simulador
+│   │   │   ├── ActionFigure.kt           # ActionFigure e FigureStatus
+│   │   │   ├── BattleResult.kt           # Resultado do simulador de duelo
+│   │   │   ├── Character.kt              # Character, CharacterDetail, Planet, Transformation
+│   │   │   └── WorkoutLog.kt             # WorkoutLog e SaiyanRank
 │   │   ├── repository/
-│   │   │   └── DragonBallRepository.kt   # Contrato da camada de dados
+│   │   │   └── DragonBallRepository.kt   # Contrato puro da camada de dados
 │   │   └── usecase/
 │   │       ├── CalculateSaiyanRankUseCase.kt
 │   │       ├── FilterCharactersUseCase.kt
+│   │       ├── GetCharacterDetailUseCase.kt
+│   │       ├── GetCharactersUseCase.kt
+│   │       ├── GetPlanetsUseCase.kt
+│   │       ├── ManageFiguresUseCase.kt
+│   │       ├── ManageWorkoutsUseCase.kt
 │   │       └── SimulateBattleUseCase.kt
 │   ├── data/
 │   │   ├── api/

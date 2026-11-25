@@ -1,6 +1,6 @@
 package com.example
 
-import com.example.data.model.CharacterDto
+import com.example.domain.model.Character
 import com.example.domain.usecase.CalculateSaiyanRankUseCase
 import com.example.domain.usecase.FilterCharactersUseCase
 import com.example.domain.usecase.SimulateBattleUseCase
@@ -43,9 +43,9 @@ class ZScouterLogicTest {
     @Test
     fun testFilterCharactersByRaceAndQuery() {
         val sample = listOf(
-            CharacterDto(id = 1, name = "Goku", race = "Saiyan", affiliation = "Z Fighter"),
-            CharacterDto(id = 2, name = "Vegeta", race = "Saiyan", affiliation = "Z Fighter"),
-            CharacterDto(id = 3, name = "Piccolo", race = "Namekian", affiliation = "Z Fighter")
+            Character(id = 1, name = "Goku", race = "Saiyan", affiliation = "Z Fighter"),
+            Character(id = 2, name = "Vegeta", race = "Saiyan", affiliation = "Z Fighter"),
+            Character(id = 3, name = "Piccolo", race = "Namekian", affiliation = "Z Fighter")
         )
 
         val saiyans = filterUseCase(sample, query = "", raceFilter = "Saiyajin", affiliationFilter = "Todos")
@@ -54,12 +54,13 @@ class ZScouterLogicTest {
         val vegeta = filterUseCase(sample, query = "veg", raceFilter = "Saiyajin", affiliationFilter = "Z Fighter")
         assertEquals(1, vegeta.size)
         assertEquals("Vegeta", vegeta.first().name)
+        assertTrue(vegeta.first().isPrinceVegeta)
     }
 
     @Test
     fun testSimulateBattleBetweenSaiyans() {
-        val vegeta = CharacterDto(id = 2, name = "Vegeta", ki = "54.000.000", maxKi = "19.84 Septillion", race = "Saiyan")
-        val krillin = CharacterDto(id = 10, name = "Krillin", ki = "1.000.000", maxKi = "2.000.000", race = "Human")
+        val vegeta = Character(id = 2, name = "Vegeta", ki = "54.000.000", maxKi = "19.84 Septillion", race = "Saiyan")
+        val krillin = Character(id = 10, name = "Krillin", ki = "1.000.000", maxKi = "2.000.000", race = "Human")
 
         val result = battleUseCase(vegeta, krillin)
         assertEquals("Vegeta", result.winner.name)

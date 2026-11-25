@@ -1,14 +1,14 @@
 package com.example.domain.usecase
 
-import com.example.data.model.CharacterDto
+import com.example.domain.model.Character
 
 class FilterCharactersUseCase {
     operator fun invoke(
-        characters: List<CharacterDto>,
+        characters: List<Character>,
         query: String,
         raceFilter: String,
         affiliationFilter: String
-    ): List<CharacterDto> {
+    ): List<Character> {
         return characters.filter { char ->
             val matchesQuery = query.isBlank() ||
                 char.name.contains(query, ignoreCase = true) ||

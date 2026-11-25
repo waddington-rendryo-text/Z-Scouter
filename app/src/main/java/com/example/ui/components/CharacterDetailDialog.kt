@@ -49,7 +49,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.SubcomposeAsyncImage
-import com.example.data.model.CharacterDetailDto
+import com.example.domain.model.CharacterDetail
 import com.example.ui.theme.CapsuleCyan
 import com.example.ui.theme.DarkSpaceBorder
 import com.example.ui.theme.DarkSpaceCard
@@ -62,7 +62,7 @@ import com.example.ui.theme.TextSecondary
 
 @Composable
 fun CharacterDetailDialog(
-    character: CharacterDetailDto,
+    character: CharacterDetail,
     isInCollection: Boolean,
     onDismiss: () -> Unit,
     onToggleCollection: () -> Unit

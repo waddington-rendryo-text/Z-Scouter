@@ -53,7 +53,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
-import com.example.data.model.CharacterDto
+import com.example.domain.model.Character
 import com.example.ui.theme.CapsuleCyan
 import com.example.ui.theme.DarkSpaceBg
 import com.example.ui.theme.DarkSpaceBorder
@@ -443,7 +443,7 @@ fun SparkingBattleScreen(
 
 @Composable
 fun FighterSlotView(
-    character: CharacterDto?,
+    character: Character?,
     label: String,
     borderColor: Color,
     onClick: () -> Unit,

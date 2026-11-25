@@ -38,7 +38,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
-import com.example.data.model.CharacterDto
+import com.example.domain.model.Character
 import com.example.ui.theme.CapsuleCyan
 import com.example.ui.theme.DarkSpaceBorder
 import com.example.ui.theme.DarkSpaceCard
@@ -50,7 +50,7 @@ import com.example.ui.theme.TextSecondary
 
 @Composable
 fun CharacterCard(
-    character: CharacterDto,
+    character: Character,
     isFigureSaved: Boolean,
     onCardClick: () -> Unit,
     onToggleFigure: () -> Unit,

@@ -56,7 +56,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
-import com.example.data.local.FigureEntity
+import com.example.domain.model.ActionFigure
+import com.example.domain.model.FigureStatus
 import com.example.ui.theme.CapsuleCyan
 import com.example.ui.theme.DarkSpaceBg
 import com.example.ui.theme.DarkSpaceBorder
@@ -79,13 +80,11 @@ fun FiguresShelfScreen(
     val planetsState by viewModel.planetsState.collectAsState()
 
     var selectedTab by remember { mutableIntStateOf(0) } // 0: Figures, 1: Planetas
-    var filterStatus by remember { mutableStateOf("Todos") }
-    var editingFigure by remember { mutableStateOf<FigureEntity?>(null) }
-
-    val statusFilters = listOf("Todos", "Exposto no Estúdio", "Na Caixa Original", "Wishlist (Desejo)")
+    var filterStatus by remember { mutableStateOf<FigureStatus?>(null) }
+    var editingFigure by remember { mutableStateOf<ActionFigure?>(null) }
 
     val filteredFigures = figures.filter {
-        filterStatus == "Todos" || it.status.equals(filterStatus, ignoreCase = true)
+        filterStatus == null || it.status == filterStatus
     }
 
     Column(
@@ -175,13 +174,13 @@ fun FiguresShelfScreen(
                                 )
                                 ShelfMetricPill(
                                     label = "EXPOSTOS",
-                                    value = "${figures.count { it.status.contains("Exposto", ignoreCase = true) }}",
+                                    value = "${figures.count { it.status == FigureStatus.EXPOSED }}",
                                     color = ScouterGreen,
                                     modifier = Modifier.weight(1f)
                                 )
                                 ShelfMetricPill(
                                     label = "WISHLIST",
-                                    value = "${figures.count { it.status.contains("Wishlist", ignoreCase = true) }}",
+                                    value = "${figures.count { it.status == FigureStatus.WISHLIST }}",
                                     color = CapsuleCyan,
                                     modifier = Modifier.weight(1f)
                                 )
@@ -193,14 +192,34 @@ fun FiguresShelfScreen(
                 // Filter Row
                 item {
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        items(statusFilters) { status ->
+                        item {
+                            val isSelected = filterStatus == null
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { filterStatus = null },
+                                label = {
+                                    Text(
+                                        text = "Todos",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontSize = 11.sp
+                                    )
+                                },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = SaiyanGold,
+                                    selectedLabelColor = DarkSpaceBg,
+                                    containerColor = DarkSpaceCard,
+                                    labelColor = TextSecondary
+                                )
+                            )
+                        }
+                        items(FigureStatus.entries) { status ->
                             val isSelected = filterStatus == status
                             FilterChip(
                                 selected = isSelected,
                                 onClick = { filterStatus = status },
                                 label = {
                                     Text(
-                                        text = status,
+                                        text = status.label,
                                         style = MaterialTheme.typography.labelMedium,
                                         fontSize = 11.sp
                                     )
@@ -287,21 +306,21 @@ fun FiguresShelfScreen(
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(6.dp))
                                             .background(
-                                                when {
-                                                    figure.status.contains("Exposto", ignoreCase = true) -> ScouterGreen.copy(alpha = 0.2f)
-                                                    figure.status.contains("Caixa", ignoreCase = true) -> CapsuleCyan.copy(alpha = 0.2f)
-                                                    else -> KiFlameOrange.copy(alpha = 0.2f)
+                                                when (figure.status) {
+                                                    FigureStatus.EXPOSED -> ScouterGreen.copy(alpha = 0.2f)
+                                                    FigureStatus.BOXED -> CapsuleCyan.copy(alpha = 0.2f)
+                                                    FigureStatus.WISHLIST -> KiFlameOrange.copy(alpha = 0.2f)
                                                 }
                                             )
                                             .padding(horizontal = 8.dp, vertical = 2.dp)
                                     ) {
                                         Text(
-                                            text = figure.status,
+                                            text = figure.status.label,
                                             style = MaterialTheme.typography.labelMedium,
-                                            color = when {
-                                                figure.status.contains("Exposto", ignoreCase = true) -> ScouterGreen
-                                                figure.status.contains("Caixa", ignoreCase = true) -> CapsuleCyan
-                                                else -> KiFlameOrange
+                                            color = when (figure.status) {
+                                                FigureStatus.EXPOSED -> ScouterGreen
+                                                FigureStatus.BOXED -> CapsuleCyan
+                                                FigureStatus.WISHLIST -> KiFlameOrange
                                             },
                                             fontSize = 9.sp
                                         )
@@ -460,7 +479,7 @@ fun FiguresShelfScreen(
                         color = TextSecondary
                     )
                     Spacer(modifier = Modifier.height(6.dp))
-                    listOf("Exposto no Estúdio", "Na Caixa Original", "Wishlist (Desejo)").forEach { st ->
+                    FigureStatus.entries.forEach { st ->
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.padding(vertical = 2.dp)
@@ -468,7 +487,7 @@ fun FiguresShelfScreen(
                             FilterChip(
                                 selected = editStatus == st,
                                 onClick = { editStatus = st },
-                                label = { Text(st, fontSize = 11.sp) },
+                                label = { Text(st.label, fontSize = 11.sp) },
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = SaiyanGold,
                                     selectedLabelColor = DarkSpaceBg

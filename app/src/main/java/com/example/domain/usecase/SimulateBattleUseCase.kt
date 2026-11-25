@@ -1,6 +1,6 @@
 package com.example.domain.usecase
 
-import com.example.data.model.CharacterDto
+import com.example.domain.model.Character
 import com.example.domain.model.BattleResult
 import kotlin.random.Random
 
@@ -13,7 +13,7 @@ class SimulateBattleUseCase {
         "Em Dragon Ball: Sparking ZERO esse matchup é puro reflexo e esquiva de vanishing!"
     )
 
-    operator fun invoke(fighter1: CharacterDto, fighter2: CharacterDto): BattleResult {
+    operator fun invoke(fighter1: Character, fighter2: Character): BattleResult {
         val p1 = estimateKiScore(fighter1)
         val p2 = estimateKiScore(fighter2)
 
@@ -22,9 +22,9 @@ class SimulateBattleUseCase {
         val minScore = minOf(p1, p2).coerceAtLeast(1L)
         val diffPct = (((maxScore - minScore).toDouble() / maxScore) * 100).toInt().coerceIn(2, 98)
 
-        val verdict = if (fighter1.name.contains("Vegeta", ignoreCase = true)) {
+        val verdict = if (fighter1.isPrinceVegeta) {
             "Vegeta aplica disciplina tática implacável e o orgulho real para superar os limites adversários!"
-        } else if (fighter2.name.contains("Vegeta", ignoreCase = true)) {
+        } else if (fighter2.isPrinceVegeta) {
             "Vegeta demonstra o poder devastador do Príncipe com um Final Flash milimétrico!"
         } else if (p1 > p2) {
             "${fighter1.name} domina o combate através de maior escalonamento de Ki e transformações superiores!"
@@ -44,7 +44,7 @@ class SimulateBattleUseCase {
         )
     }
 
-    fun estimateKiScore(character: CharacterDto): Long {
+    fun estimateKiScore(character: Character): Long {
         var baseScore = 50000L
         val cleanKi = character.ki
             ?.replace(".", "")
@@ -65,8 +65,8 @@ class SimulateBattleUseCase {
             baseScore += 15000000000L
         }
 
-        if (character.race.equals("Saiyan", ignoreCase = true)) baseScore += 2000000000L
-        if (character.name.contains("Vegeta", ignoreCase = true)) baseScore += 3500000000L
+        if (character.isSaiyan) baseScore += 2000000000L
+        if (character.isPrinceVegeta) baseScore += 3500000000L
         if (character.name.contains("Goku", ignoreCase = true)) baseScore += 3200000000L
         if (character.name.contains("Beerus", ignoreCase = true) || character.name.contains("Whis", ignoreCase = true)) {
             baseScore += 80000000000L
