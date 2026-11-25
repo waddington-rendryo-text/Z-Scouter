@@ -52,6 +52,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.SubcomposeAsyncImage
 import com.example.domain.model.Character
 import com.example.ui.theme.CapsuleCyan
@@ -73,11 +74,11 @@ fun SparkingBattleScreen(
     viewModel: ZScouterViewModel,
     modifier: Modifier = Modifier
 ) {
-    val charactersState by viewModel.charactersState.collectAsState()
-    val fighter1 by viewModel.battleFighter1.collectAsState()
-    val fighter2 by viewModel.battleFighter2.collectAsState()
-    val isSimulating by viewModel.isSimulatingBattle.collectAsState()
-    val battleResult by viewModel.battleResult.collectAsState()
+    val charactersState by viewModel.charactersState.collectAsStateWithLifecycle()
+    val fighter1 by viewModel.battleFighter1.collectAsStateWithLifecycle()
+    val fighter2 by viewModel.battleFighter2.collectAsStateWithLifecycle()
+    val isSimulating by viewModel.isSimulatingBattle.collectAsStateWithLifecycle()
+    val battleResult by viewModel.battleResult.collectAsStateWithLifecycle()
 
     var selectingForFighterSlot by remember { mutableStateOf<Int?>(null) }
 

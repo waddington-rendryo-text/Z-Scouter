@@ -24,6 +24,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavDestination
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavDestination.Companion.hierarchy
+import com.example.ui.navigation.FiguresShelfRoute
+import com.example.ui.navigation.RadarRoute
+import com.example.ui.navigation.SaiyanModeRoute
+import com.example.ui.navigation.SparkingBattleRoute
 import com.example.ui.theme.DarkSpaceBg
 import com.example.ui.theme.DarkSpaceSurface
 import com.example.ui.theme.SaiyanGold
@@ -31,16 +38,16 @@ import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
 
 sealed class NavTab(
-    val index: Int,
+    val route: Any,
     val title: String,
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector,
     val testTag: String
 ) {
-    object Radar : NavTab(0, "Radar Z", Icons.Filled.Radar, Icons.Outlined.Radar, "nav_radar")
-    object SaiyanMode : NavTab(1, "Modo Sayajin", Icons.Filled.FitnessCenter, Icons.Outlined.FitnessCenter, "nav_saiyan_mode")
-    object Sparking : NavTab(2, "Batalha", Icons.Filled.FlashOn, Icons.Outlined.FlashOn, "nav_sparking")
-    object Figures : NavTab(3, "Prateleira", Icons.Filled.Inventory2, Icons.Outlined.Inventory2, "nav_figures")
+    data object Radar : NavTab(RadarRoute, "Radar Z", Icons.Filled.Radar, Icons.Outlined.Radar, "nav_radar")
+    data object SaiyanMode : NavTab(SaiyanModeRoute, "Modo Sayajin", Icons.Filled.FitnessCenter, Icons.Outlined.FitnessCenter, "nav_saiyan_mode")
+    data object Sparking : NavTab(SparkingBattleRoute, "Batalha", Icons.Filled.FlashOn, Icons.Outlined.FlashOn, "nav_sparking")
+    data object Figures : NavTab(FiguresShelfRoute, "Prateleira", Icons.Filled.Inventory2, Icons.Outlined.Inventory2, "nav_figures")
 
     companion object {
         val items = listOf(Radar, SaiyanMode, Sparking, Figures)
@@ -49,8 +56,8 @@ sealed class NavTab(
 
 @Composable
 fun ZBottomNavigation(
-    currentTabIndex: Int,
-    onTabSelected: (Int) -> Unit,
+    currentDestination: NavDestination?,
+    onNavigateToTab: (Any) -> Unit,
     modifier: Modifier = Modifier
 ) {
     NavigationBar(
@@ -60,10 +67,10 @@ fun ZBottomNavigation(
         contentColor = TextPrimary
     ) {
         NavTab.items.forEach { tab ->
-            val isSelected = currentTabIndex == tab.index
+            val isSelected = currentDestination?.hierarchy?.any { it.hasRoute(tab.route::class) } == true
             NavigationBarItem(
                 selected = isSelected,
-                onClick = { onTabSelected(tab.index) },
+                onClick = { onNavigateToTab(tab.route) },
                 icon = {
                     Icon(
                         imageVector = if (isSelected) tab.selectedIcon else tab.unselectedIcon,

@@ -47,6 +47,9 @@ class ZScouterViewModel(
     private val _charactersState = MutableStateFlow<UiState<List<Character>>>(UiState.Loading)
     val charactersState: StateFlow<UiState<List<Character>>> = _charactersState.asStateFlow()
 
+    private val _characterDetailState = MutableStateFlow<UiState<CharacterDetail>>(UiState.Loading)
+    val characterDetailState: StateFlow<UiState<CharacterDetail>> = _characterDetailState.asStateFlow()
+
     private val _allCharacters = MutableStateFlow<List<Character>>(emptyList())
 
     val searchQuery = MutableStateFlow("")
@@ -66,12 +69,6 @@ class ZScouterViewModel(
             affiliationFilter = affiliation
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    private val _selectedCharacterDetail = MutableStateFlow<CharacterDetail?>(null)
-    val selectedCharacterDetail: StateFlow<CharacterDetail?> = _selectedCharacterDetail.asStateFlow()
-
-    private val _isLoadingDetail = MutableStateFlow(false)
-    val isLoadingDetail: StateFlow<Boolean> = _isLoadingDetail.asStateFlow()
 
     private val _planetsState = MutableStateFlow<UiState<List<Planet>>>(UiState.Loading)
     val planetsState: StateFlow<UiState<List<Planet>>> = _planetsState.asStateFlow()
@@ -178,34 +175,36 @@ class ZScouterViewModel(
         }
     }
 
-    fun selectCharacterForDetail(character: Character) {
+    fun loadCharacterDetail(characterId: Int) {
         viewModelScope.launch {
-            _isLoadingDetail.value = true
-            _selectedCharacterDetail.value = null
-            getCharacterDetailUseCase(character.id)
+            _characterDetailState.value = UiState.Loading
+            getCharacterDetailUseCase(characterId)
                 .onSuccess { detail ->
-                    _selectedCharacterDetail.value = detail
-                    _isLoadingDetail.value = false
+                    _characterDetailState.value = UiState.Success(detail)
                 }
-                .onFailure {
-                    _selectedCharacterDetail.value = CharacterDetail(
-                        id = character.id,
-                        name = character.name,
-                        ki = character.ki,
-                        maxKi = character.maxKi,
-                        race = character.race,
-                        gender = character.gender,
-                        description = character.description,
-                        image = character.image,
-                        affiliation = character.affiliation
-                    )
-                    _isLoadingDetail.value = false
+                .onFailure { error ->
+                    val fallback = _allCharacters.value.firstOrNull { it.id == characterId }
+                    if (fallback != null) {
+                        _characterDetailState.value = UiState.Success(
+                            CharacterDetail(
+                                id = fallback.id,
+                                name = fallback.name,
+                                ki = fallback.ki,
+                                maxKi = fallback.maxKi,
+                                race = fallback.race,
+                                gender = fallback.gender,
+                                description = fallback.description,
+                                image = fallback.image,
+                                affiliation = fallback.affiliation
+                            )
+                        )
+                    } else {
+                        _characterDetailState.value = UiState.Error(
+                            error.localizedMessage ?: "Não foi possível carregar os dados deste guerreiro."
+                        )
+                    }
                 }
         }
-    }
-
-    fun closeCharacterDetail() {
-        _selectedCharacterDetail.value = null
     }
 
     fun toggleFigureCollection(character: Character, defaultStatus: FigureStatus = FigureStatus.EXPOSED) {

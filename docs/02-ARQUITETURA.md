@@ -13,7 +13,7 @@ O **Z-Scouter** foi estruturado para separar responsabilidades entre **apresenta
 +-------------------------------------------------------------------+
 |                        PRESENTATION LAYER                         |
 |  Jetpack Compose (Screens, Components, Theme) + ZScouterViewModel |
-|  • StateFlow<UiState<T>>  • Eventos de UI  • Navigation / Dialogs |
+|  • StateFlow<UiState<T>>  • Eventos de UI  • Navigation Compose  |
 +---------------------------------+---------------------------------+
                                   |
                                   v
@@ -43,16 +43,19 @@ O **Z-Scouter** foi estruturado para separar responsabilidades entre **apresenta
 
 ### 2.1. Camada de Apresentação (`Presentation`)
 Responsável exclusivamente por renderizar o estado da interface, capturar interações do usuário e observar fluxos reativos com lifecycle awareness.
+- **Navegação (`ui/navigation/ZScouterRoutes.kt`):**
+  - Rotas type-safe com `@Serializable` (`RadarRoute`, `CharacterDetailRoute(characterId)`, `SaiyanModeRoute`, `SparkingBattleRoute`, `FiguresShelfRoute`) gerenciadas via `NavHost` e `NavController`.
 - **Telas (`ui/screens/`):**
   - `RadarScreen.kt`: Galeria de personagens, banner herói do Vegeta, barra de busca e chips de filtro por raça.
+  - `CharacterDetailScreen.kt`: Tela dedicada de detalhes do guerreiro (`CharacterDetailRoute`) com estados reativos (`Loading`, `Success`, `Error`), carrossel de transformações, planeta de origem e toggle para estante.
   - `SaiyanModeScreen.kt`: HUD Scouter, citações motivacionais, formulário de registro de treinos e histórico.
   - `SparkingBattleScreen.kt`: Arena VS, seletor de combatentes e exibição animada do veredito do Scouter.
   - `FiguresShelfScreen.kt`: Abas para estante de *Action Figures* (CRUD + filtros de status) e catálogo de *Planetas Lore*.
 - **Componentes Reutilizáveis (`ui/components/`):**
-  - `ScouterHudCard.kt`, `CharacterCard.kt`, `CharacterDetailDialog.kt`, `ZBottomNavigation.kt`.
+  - `ScouterHudCard.kt`, `CharacterCard.kt`, `DetailComponents.kt`, `ZBottomNavigation.kt`.
 - **ViewModel (`ui/viewmodel/ZScouterViewModel.kt`):**
   - Gerencia estados tipados via `sealed interface UiState<out T>` (`Loading`, `Success`, `Error`).
-  - Combina fluxos com `combine` (`filteredCharacters`) e expõe `StateFlow` para a UI.
+  - Combina fluxos com `combine` (`filteredCharacters`) e expõe `StateFlow`s observados com `collectAsStateWithLifecycle()`.
 - **Tema (`ui/theme/`):**
   - Centraliza paleta (`Color.kt`), tipografia com fonte local `Orbitron` (`Type.kt`) e esquema Material 3 (`Theme.kt`).
 
@@ -102,7 +105,7 @@ Módulos globais configurados em `di/` e inicializados em `ZScouterApplication`:
 1. **Ação do Usuário:** Toque em um filtro, registro de treino ou botão *"Analisar com Scouter"*.
 2. **Processamento:** O `ZScouterViewModel` (injetado via `koinViewModel()`) dispara uma coroutine em `viewModelScope`, aplica os UseCases de domínio ou aciona o `DragonBallRepository`.
 3. **Atualização de Estado:** O repositório retorna `Result<T>` (API) ou emite novos valores no `Flow` (Room), atualizando os `StateFlow`s do ViewModel.
-4. **Recomposição:** Os Composables coletam o estado via `collectAsState()` e atualizam apenas os nós visuais afetados.
+4. **Recomposição:** Os Composables coletam o estado com consciência de ciclo de vida via `collectAsStateWithLifecycle()` e atualizam apenas os nós visuais afetados.
 
 ---
 
@@ -114,7 +117,7 @@ A estrutura segue agrupamento por **camada da Clean Architecture (`data`, `domai
 app/src/main/
 ├── AndroidManifest.xml                   # Permissões (INTERNET, ACCESS_NETWORK_STATE) e ZScouterApplication
 ├── java/com/example/
-│   ├── MainActivity.kt                   # Entry point, Edge-to-Edge, Scaffold, BackHandler e koinViewModel()
+│   ├── MainActivity.kt                   # Entry point, Edge-to-Edge, Scaffold, NavHost e koinViewModel()
 │   ├── ZScouterApplication.kt            # Inicialização global do Koin (startKoin)
 │   ├── di/
 │   │   ├── DatabaseModule.kt             # Módulo Room (AppDatabase + DAOs)
@@ -155,10 +158,13 @@ app/src/main/
 │   └── ui/
 │       ├── components/                   # Componentes visuais reutilizáveis e desacoplados
 │       │   ├── CharacterCard.kt
-│       │   ├── CharacterDetailDialog.kt
+│       │   ├── DetailComponents.kt
 │       │   ├── ScouterHudCard.kt
 │       │   └── ZBottomNavigation.kt
-│       ├── screens/                      # Telas principais correspondentes às 4 abas
+│       ├── navigation/                   # Rotas type-safe do Navigation Compose
+│       │   └── ZScouterRoutes.kt
+│       ├── screens/                      # Telas principais e tela de detalhes
+│       │   ├── CharacterDetailScreen.kt
 │       │   ├── FiguresShelfScreen.kt
 │       │   ├── RadarScreen.kt
 │       │   ├── SaiyanModeScreen.kt
@@ -184,4 +190,4 @@ app/src/main/
 - **Catálogo de Versões Centralizado (`gradle/libs.versions.toml`):** Mantém compatibilidade garantida entre AGP, Kotlin, Compose BOM, Room e KSP.
 - **Room vs. Armazenamento em Memória:** Escolhido o Room para que treinos e coleção de miniaturas do usuário permaneçam salvos entre sessões mesmo sem conexão à internet.
 - **Moshi + KSP em vez de Gson:** Maior segurança com nullability do Kotlin e menor overhead de reflexão.
-- **Navegação por Estado + `BackHandler`:** Para 4 abas fixas de nível superior com troca instantânea (`Crossfade`) e diálogo modal de detalhes, reduz o boilerplate mantendo comportamento nativo do botão Voltar.
+- **Navigation Compose Type-Safe (`@Serializable`):** Rotas tipadas em `ZScouterRoutes.kt` com backstack nativo gerenciado pelo `NavHost`, preservando estado entre abas (`saveState`/`restoreState`) e isolando a tela de detalhes (`CharacterDetailScreen`) com ocultação contextual da barra inferior.

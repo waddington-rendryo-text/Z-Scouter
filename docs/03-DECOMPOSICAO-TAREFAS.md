@@ -65,16 +65,16 @@
   - Implementar lógica de cálculo de Ki, evolução de patente Saiyajin e frases motivacionais.
   - Implementar motor do simulador Sparking (`runBattleSimulation`, `estimateKiScore`).
   - Implementar seed inicial de action figures (*Vegeta* e *Goku*) quando a coleção estiver vazia.
-- [x] **T4.2 — Shell Principal e Navegação (`MainActivity.kt` + `ZBottomNavigation.kt`)**
-  - Configurar `enableEdgeToEdge()`, `WindowInsets.safeDrawing` e `BackHandler`.
-  - Integrar barra de navegação inferior com 4 abas (*Radar Z, Modo Sayajin, Batalha, Prateleira*) e overlay de detalhes (`CharacterDetailDialog`).
+- [x] **T4.2 — Shell Principal e Navegação (`MainActivity.kt` + `ZScouterRoutes.kt` + `ZBottomNavigation.kt`)**
+  - Configurar `enableEdgeToEdge()`, `WindowInsets.safeDrawing` e `NavHost` com rotas `@Serializable`.
+  - Integrar barra de navegação inferior com 4 abas (*Radar Z, Modo Sayajin, Batalha, Prateleira*) e rota dedicada de detalhes (`CharacterDetailRoute`).
 
 ---
 
 ## Etapa 5: Implementação das Telas e Componentes de UI
 
-- [x] **T5.1 — Radar Z (`RadarScreen.kt` + `CharacterCard.kt` + `CharacterDetailDialog.kt`)**
-  - Grade responsiva de personagens, estados de Loading/Error/Empty, busca, filtros e modal completo com transformações.
+- [x] **T5.1 — Radar Z e Detalhes (`RadarScreen.kt` + `CharacterCard.kt` + `CharacterDetailScreen.kt` + `DetailComponents.kt`)**
+  - Grade responsiva de personagens, estados de Loading/Error/Empty, busca, filtros e tela completa de detalhes com transformações.
 - [x] **T5.2 — Modo Saiyajin (`SaiyanModeScreen.kt` + `ScouterHudCard.kt`)**
   - HUD animado com contador de Ki, formulário de registro de treinos com dropdown de exercícios e histórico com exclusão.
 - [x] **T5.3 — Simulador Sparking (`SparkingBattleScreen.kt`)**

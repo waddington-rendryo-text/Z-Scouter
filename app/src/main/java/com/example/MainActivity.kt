@@ -2,36 +2,40 @@ package com.example
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import com.example.ui.components.CharacterDetailDialog
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
+import com.example.ui.components.NavTab
 import com.example.ui.components.ZBottomNavigation
+import com.example.ui.navigation.CharacterDetailRoute
+import com.example.ui.navigation.FiguresShelfRoute
+import com.example.ui.navigation.RadarRoute
+import com.example.ui.navigation.SaiyanModeRoute
+import com.example.ui.navigation.SparkingBattleRoute
+import com.example.ui.screens.CharacterDetailScreen
 import com.example.ui.screens.FiguresShelfScreen
 import com.example.ui.screens.RadarScreen
 import com.example.ui.screens.SaiyanModeScreen
 import com.example.ui.screens.SparkingBattleScreen
 import com.example.ui.theme.DarkSpaceBg
 import com.example.ui.theme.MyApplicationTheme
-import com.example.ui.theme.SaiyanGold
 import com.example.ui.viewmodel.ZScouterViewModel
 import org.koin.androidx.compose.koinViewModel
 
@@ -51,68 +55,72 @@ class MainActivity : ComponentActivity() {
 fun ZScouterApp(
     viewModel: ZScouterViewModel = koinViewModel()
 ) {
-    var currentTab by rememberSaveable { mutableIntStateOf(0) }
+    val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
 
-    // Handle back button to return to Radar tab if currently on other tabs
-    BackHandler(enabled = currentTab != 0) {
-        currentTab = 0
+    val showBottomBar = NavTab.items.any { tab ->
+        currentDestination?.hierarchy?.any { it.hasRoute(tab.route::class) } == true
     }
-
-    val selectedDetail by viewModel.selectedCharacterDetail.collectAsState()
-    val isLoadingDetail by viewModel.isLoadingDetail.collectAsState()
-    val figures by viewModel.figures.collectAsState()
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets.safeDrawing,
         containerColor = DarkSpaceBg,
         bottomBar = {
-            ZBottomNavigation(
-                currentTabIndex = currentTab,
-                onTabSelected = { currentTab = it }
-            )
-        }
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            Crossfade(
-                targetState = currentTab,
-                label = "tab_crossfade"
-            ) { tabIndex ->
-                when (tabIndex) {
-                    0 -> RadarScreen(viewModel = viewModel)
-                    1 -> SaiyanModeScreen(viewModel = viewModel)
-                    2 -> SparkingBattleScreen(viewModel = viewModel)
-                    3 -> FiguresShelfScreen(viewModel = viewModel)
-                }
-            }
-
-            // Loading overlay for detail fetch
-            if (isLoadingDetail) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color(0x800A0E17)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = SaiyanGold)
-                }
-            }
-
-            // Character Detail Dialog
-            selectedDetail?.let { detail ->
-                val isInCollection = figures.any { it.characterId == detail.id }
-                CharacterDetailDialog(
-                    character = detail,
-                    isInCollection = isInCollection,
-                    onDismiss = { viewModel.closeCharacterDetail() },
-                    onToggleCollection = {
-                        viewModel.toggleFigureCollection(detail.toBasicCharacter())
+            if (showBottomBar) {
+                ZBottomNavigation(
+                    currentDestination = currentDestination,
+                    onNavigateToTab = { route ->
+                        navController.navigate(route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
                 )
+            }
+        }
+    ) { innerPadding ->
+        NavHost(
+            navController = navController,
+            startDestination = RadarRoute,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            enterTransition = { fadeIn() },
+            exitTransition = { fadeOut() }
+        ) {
+            composable<RadarRoute> {
+                RadarScreen(
+                    viewModel = viewModel,
+                    onCharacterClick = { characterId ->
+                        navController.navigate(CharacterDetailRoute(characterId))
+                    }
+                )
+            }
+
+            composable<CharacterDetailRoute> { backStackEntry ->
+                val detailRoute = backStackEntry.toRoute<CharacterDetailRoute>()
+                CharacterDetailScreen(
+                    characterId = detailRoute.characterId,
+                    viewModel = viewModel,
+                    onBackClick = { navController.navigateUp() }
+                )
+            }
+
+            composable<SaiyanModeRoute> {
+                SaiyanModeScreen(viewModel = viewModel)
+            }
+
+            composable<SparkingBattleRoute> {
+                SparkingBattleScreen(viewModel = viewModel)
+            }
+
+            composable<FiguresShelfRoute> {
+                FiguresShelfScreen(viewModel = viewModel)
             }
         }
     }

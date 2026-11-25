@@ -53,6 +53,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ui.components.ScouterHudCard
 import com.example.ui.theme.CapsuleCyan
 import com.example.ui.theme.DarkSpaceBg
@@ -75,10 +76,11 @@ fun SaiyanModeScreen(
     viewModel: ZScouterViewModel,
     modifier: Modifier = Modifier
 ) {
-    val currentKi = viewModel.calculateTotalKi()
+    val totalKiGained by viewModel.totalKiGained.collectAsStateWithLifecycle()
+    val currentKi = 9001L + (totalKiGained ?: 0L)
     val saiyanRank = viewModel.getSaiyanRankTitle(currentKi)
-    val currentQuote by viewModel.currentQuote.collectAsState()
-    val workouts by viewModel.workouts.collectAsState()
+    val currentQuote by viewModel.currentQuote.collectAsStateWithLifecycle()
+    val workouts by viewModel.workouts.collectAsStateWithLifecycle()
 
     val exercisePresets = listOf(
         "Supino na Câmara de Gravidade 100x",

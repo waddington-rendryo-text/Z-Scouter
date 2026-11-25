@@ -48,6 +48,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.R
 import com.example.ui.components.CharacterCard
 import com.example.ui.theme.CapsuleCyan
@@ -65,14 +66,15 @@ import com.example.ui.viewmodel.ZScouterViewModel
 @Composable
 fun RadarScreen(
     viewModel: ZScouterViewModel,
+    onCharacterClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val charactersState by viewModel.charactersState.collectAsState()
-    val filteredList by viewModel.filteredCharacters.collectAsState()
-    val searchQuery by viewModel.searchQuery.collectAsState()
-    val selectedRace by viewModel.selectedRaceFilter.collectAsState()
-    val figures by viewModel.figures.collectAsState()
-    val isOfflineMode by viewModel.isOfflineMode.collectAsState()
+    val charactersState by viewModel.charactersState.collectAsStateWithLifecycle()
+    val filteredList by viewModel.filteredCharacters.collectAsStateWithLifecycle()
+    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+    val selectedRace by viewModel.selectedRaceFilter.collectAsStateWithLifecycle()
+    val figures by viewModel.figures.collectAsStateWithLifecycle()
+    val isOfflineMode by viewModel.isOfflineMode.collectAsStateWithLifecycle()
 
     val savedCharacterIds = figures.map { it.characterId }.toSet()
 
@@ -316,7 +318,7 @@ fun RadarScreen(
                             CharacterCard(
                                 character = character,
                                 isFigureSaved = savedCharacterIds.contains(character.id),
-                                onCardClick = { viewModel.selectCharacterForDetail(character) },
+                                onCardClick = { onCharacterClick(character.id) },
                                 onToggleFigure = { viewModel.toggleFigureCollection(character) }
                             )
                         }

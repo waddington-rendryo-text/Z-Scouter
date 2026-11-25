@@ -55,6 +55,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.SubcomposeAsyncImage
 import com.example.domain.model.ActionFigure
 import com.example.domain.model.FigureStatus
@@ -76,8 +77,8 @@ fun FiguresShelfScreen(
     viewModel: ZScouterViewModel,
     modifier: Modifier = Modifier
 ) {
-    val figures by viewModel.figures.collectAsState()
-    val planetsState by viewModel.planetsState.collectAsState()
+    val figures by viewModel.figures.collectAsStateWithLifecycle()
+    val planetsState by viewModel.planetsState.collectAsStateWithLifecycle()
 
     var selectedTab by remember { mutableIntStateOf(0) } // 0: Figures, 1: Planetas
     var filterStatus by remember { mutableStateOf<FigureStatus?>(null) }
@@ -398,11 +399,28 @@ fun FiguresShelfScreen(
                     }
                     is UiState.Error -> {
                         item {
-                            Text(
-                                text = "Erro ao carregar planetas da lore.",
-                                color = KiFlameOrange,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(DarkSpaceCard)
+                                    .border(1.dp, KiFlameOrange.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                                    .padding(16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = pState.message,
+                                    color = KiFlameOrange,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Button(
+                                    onClick = { viewModel.loadPlanets() },
+                                    colors = ButtonDefaults.buttonColors(containerColor = SaiyanGold)
+                                ) {
+                                    Text("Reconectar Planetas", color = DarkSpaceBg)
+                                }
+                            }
                         }
                     }
                     is UiState.Success -> {
